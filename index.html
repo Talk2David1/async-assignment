@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Player</title>
+</head>
+<body>
+  <label for="videoUrl">Enter Video URL:</label>
+  <input type="text" id="videoUrl" placeholder="Paste video URL here">
+  <button onclick="playVideo()">Download Video</button>
+
+  <script>
+    function downloadVideoContent(url, callback) {
+      const vid = new XMLHttpRequest();
+      vid.open('GET', url, true);
+      vid.responseType = 'blob';
+
+      vid.addEventListener('load', () => {
+        if (vid.status === 200) {
+          callback(null, vid.response);
+        } else {
+          callback(new Error('Download failed.'));
+        }
+      });
+
+      vid.addEventListener('error', () => {
+        callback(new Error('Network error.'));
+      });
+
+      vid.send();
+    }
+
+    function fetchContentAsABlob(url) {
+      return new Promise((resolve, reject) => {
+        downloadVideoContent(url, (error, data) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(data);
+          }
+        });
+      });
+    }
+
+    async function playVideo() {
+      try {
+        const videoUrlInput = document.getElementById('videoUrl');
+        const videoURL = videoUrlInput.value;
+        const proxyURL = 'https://cors-anywhere.herokuapp.com/';
+        const videoBlob = await fetchContentAsABlob(proxyURL + videoURL);
+        const blobURL = window.URL.createObjectURL(videoBlob);
+        const videoElement = document.createElement('video');
+
+        videoElement.src = blobURL;
+        videoElement.controls = true;
+        videoElement.autoplay = true;
+
+        document.body.appendChild(videoElement);
+
+        window.URL.revokeObjectURL(blobURL);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
